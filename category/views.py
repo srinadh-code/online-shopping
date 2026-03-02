@@ -1,3 +1,4 @@
+from django.db.models import Avg, Min, Max
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
@@ -13,7 +14,8 @@ from .models import (
     Wishlist,
     WishlistItem,
     Order,
-    OrderItem
+    OrderItem,
+    Review
 )
 
 @login_required
@@ -21,7 +23,6 @@ def dashboardview(request):
 
     # USER INFO
     username = request.user.username
-
 
     # CATEGORIES WITH SUBCATEGORIES
     categories = Category.objects.prefetch_related("subcategories").all()
@@ -122,11 +123,9 @@ def dashboardview(request):
     context = {
 
         "username": username,
-
         "categories": categories,
 
         "recently_viewed": recently_viewed,
-
         "recommended": recommended,
 
         "just_arrived": just_arrived,
@@ -152,10 +151,51 @@ def subcategory_view(request, subcategory_id):
     subcategory = get_object_or_404(SubCategory, id=subcategory_id)
     products = Product.objects.filter(subcategory=subcategory)
 
+    price_data = products.aggregate(
+        min_price=Min('price'),
+        max_price=Max('price')
+    )
+
+    min_price = price_data['min_price'] or 0
+    max_price = price_data['max_price'] or 0
+
+    if max_price > min_price:
+        range_size = (max_price - min_price) // 3
+
+        price_ranges = [
+            (min_price, min_price + range_size),
+            (min_price + range_size + 1, min_price + 2*range_size),
+            (min_price + 2*range_size + 1, max_price)
+        ]
+    else:
+        price_ranges = []
+
+
+    price_range = request.GET.get("price_range")
+
+    if price_range:
+        min_p, max_p = price_range.split("-")
+        products = products.filter(
+            price__gte=int(min_p),
+            price__lte=int(max_p)
+        )
+
+    # 🔹 Sorting
+    sort = request.GET.get("sort")
+
+    sort_map = {
+        "price_low": "price",
+        "price_high": "-price"
+    }   
+
+    sort_value = sort_map.get(sort, "-id")
+    products = products.order_by(sort_value)
+
     return render(request, "products.html", {
         "subcategory": subcategory,
         "products": products,
-        "title": subcategory.name
+        "title": subcategory.name,
+        "price_ranges":price_ranges
     })
     
 @login_required
@@ -184,9 +224,33 @@ def product_detail(request, product_id):
         product=product
     ).exists()
 
+    #review submit 
+
+    
+
+    if request.method == "POST":
+        print(request.POST)
+        rating = request.POST.get("rating")
+        comment = request.POST.get("comment")
+
+        if rating:
+            Review.objects.update_or_create(
+                product=product,
+                user=request.user,
+                defaults={
+                "rating":int(rating),
+                "comment":comment
+                }
+            )
+        return redirect('product_detail', product_id=product.id)
+
+    reviews = product.reviews.all().order_by("-created_at")
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
     return render(request, "product_detail.html", {
         "product": product,
-        "in_wishlist": in_wishlist
+        "in_wishlist": in_wishlist,
+        "reviews":reviews,
+        "avg_rating":avg_rating
     })
 
 @login_required
@@ -288,7 +352,7 @@ def my_orders(request):
 
         diff = now - order.created_at
 
-        if diff >= timedelta(minutes=2):
+        if diff >= timedelta(minutes=1):
             order.status = "Delivered"
 
         elif diff >= timedelta(minutes=1):

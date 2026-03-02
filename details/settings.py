@@ -137,3 +137,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ones12245@gmail.com'
 EMAIL_HOST_PASSWORD = 'tfyi pmyv dvmo xlaj'
+# DEFAULT_FROM_EMAIL='test2@gmail.com'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

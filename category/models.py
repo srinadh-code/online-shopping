@@ -21,7 +21,8 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/')
-
+    stock=models.IntegerField(default=10)
+    
     def __str__(self):
         return self.name
 
@@ -90,6 +91,24 @@ class WishlistItem(models.Model):
 
     class Meta:
         unique_together = ('wishlist', 'product')
+
+
+
+
+
+
+class Review(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('product', 'user')
+
+    def __str__(self):
+        return f"{self.user} - {self.product} - {self.rating}"
 from django.utils import timezone
 from datetime import timedelta
 
@@ -117,7 +136,7 @@ class ReturnRequest(models.Model):
     request_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     reason = models.TextField()
 
-    image = models.ImageField(upload_to='return_images/', null=True, blank=True)  # 📸 proof
+    image = models.ImageField(upload_to='return_images/', null=True, blank=True)  
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
     refund_status = models.CharField(max_length=20, choices=REFUND_STATUS, default='Not Initiated')

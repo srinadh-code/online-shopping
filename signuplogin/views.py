@@ -3,7 +3,8 @@ from .models import OTP
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login,logout
+from django.contrib.auth import authenticate, login,logout,login,authenticate
+from .serializers import SignupSerializer
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,27 +17,24 @@ class signupview(View):
 
     def get(self, request):
         return render(request, "signup.html")
-
-    def post(self, request):
-        username = request.POST.get("username")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-
-        if User.objects.filter(username=username).exists():
-            return render(request, "signup.html", {"error": "Username already exists"})
-
-        if User.objects.filter(email=email).exists():
-            return render(request, "signup.html", {"error": "Email already registered"})
+   
+   
         
-        User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
+    def post(self, request):
+        serializer = SignupSerializer(data=request.POST)
+        if serializer.is_valid():
+            serializer.save()
+
+            return render(request, "signup.html", {
+                "message": "Account created successfully!"
+            })
         return render(request, "signup.html", {
-            "message": "Account created successfully!"
+            "errors": serializer.errors
         })
         
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+
 class loginview(View):
     def get(self, request):
         return render(request, "login.html")
@@ -81,7 +79,7 @@ class ForgotPasswordView(View):
             send_mail(
                 "Password Reset OTP",
                 f"Your OTP is {otp_code}",
-                django.conf.settings.EMAIL_HOST_USER,
+                settings.EMAIL_HOST_USER,
                 [email],
                 fail_silently=False,
             )
