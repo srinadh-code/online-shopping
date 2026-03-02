@@ -7,6 +7,11 @@ from django.contrib.auth import authenticate, login,logout
 import random
 from django.core.mail import send_mail
 from django.conf import settings
+import random
+from django.core.mail import send_mail
+from django.conf import settings
+
+
 class signupview(View):
 
     def get(self, request):
@@ -59,9 +64,7 @@ class logoutview(View):
     def get(self, request):
         logout(request)
         return redirect("login")
-import random
-from django.core.mail import send_mail
-from django.conf import settings
+
 
 class ForgotPasswordView(View):
     def get(self, request):
