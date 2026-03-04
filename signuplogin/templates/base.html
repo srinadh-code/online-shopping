@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}SRIA Luxury{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500&family=Inter:wght@200;400;600&display=swap');
+
+        :root {
+            --accent: #d4bda8;
+            --accent-glow: rgba(212, 189, 168, 0.6);
+            --bg-dark: #050505;
+            --card-bg: rgba(10, 10, 10, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --danger: #ff6b6b;
+            --success: #00ffaa;
+            --logo-pink: #ff0055;
+            --logo-blue: #0088ff;
+            --logo-green: #00ff66;
+            --logo-yellow: #ffdd00;
+        }
+
+        html, body { cursor: none !important; margin: 0; padding: 0; box-sizing: border-box; background-color: var(--bg-dark); color: #fff; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        a, button, input, label { cursor: none !important; }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .noise { position: fixed; inset: 0; z-index: 2; opacity: 0.05; pointer-events: none; background: url('https://grainy-gradients.vercel.app/noise.svg'); }
+
+        /* Premium Cursor */
+        #cursor-follower { width: 45px; height: 45px; border: 1.5px solid var(--accent); border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 20000; transition: transform 0.15s ease-out, opacity 0.3s ease; box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px var(--accent-glow); opacity: 0; }
+        #cursor-main { width: 8px; height: 8px; background: #fff; border-radius: 50%; position: fixed; top: 0; left: 0; pointer-events: none; z-index: 20001; box-shadow: 0 0 15px #fff; opacity: 0; }
+
+        /* Shared Page Layout */
+        .main-wrapper { position: relative; z-index: 3; width: 100%; max-width: 1300px; padding: 40px; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 120px; margin: 0 auto; height: 100vh; perspective: 1500px; }
+        
+        /* Branding Section Shared Styles */
+        .brand-section { display: flex; flex-direction: column; gap: 15px; transform-style: preserve-3d; }
+        .brand-section h1 { font-family: 'Syncopate', sans-serif; font-size: clamp(60px, 10vw, 130px); line-height: 0.8; text-transform: uppercase; letter-spacing: -10px; background: linear-gradient(180deg, #fff 30%, #444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 30px rgba(255,255,255,0.1)); }
+        .brand-section .subtitle { font-family: 'Syncopate', sans-serif; font-size: 11px; letter-spacing: 12px; opacity: 0.5; margin-left: 10px; text-transform: uppercase; color: var(--accent); }
+
+        /* Animated Logo */
+        .core-visual { position: relative; width: 280px; height: 280px; display: flex; align-items: center; justify-content: center; margin-top: 40px; }
+        .logo-container { width: 180px; height: 180px; position: relative; animation: logoRotate 25s linear infinite; }
+        .logo-circle { position: absolute; width: 80px; height: 80px; border-radius: 50%; mix-blend-mode: screen; animation: pulseCore 5s ease-in-out infinite; border: 1px solid rgba(255,255,255,0.2); }
+        .circle-top { top: 0; left: 50px; background: radial-gradient(circle at 30% 30%, var(--logo-pink), #600); box-shadow: 0 0 40px var(--logo-pink); animation-delay: 0s; }
+        .circle-right { top: 50px; right: 0; background: radial-gradient(circle at 30% 30%, var(--logo-yellow), #650); box-shadow: 0 0 40px var(--logo-yellow); animation-delay: 1.25s; }
+        .circle-bottom { bottom: 0; left: 50px; background: radial-gradient(circle at 30% 30%, var(--logo-green), #040); box-shadow: 0 0 40px var(--logo-green); animation-delay: 2.5s; }
+        .circle-left { top: 50px; left: 0; background: radial-gradient(circle at 30% 30%, var(--logo-blue), #004); box-shadow: 0 0 40px var(--logo-blue); animation-delay: 3.75s; }
+
+        @keyframes logoRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulseCore { 0%, 100% { transform: scale(1) translateZ(0); opacity: 0.8; } 50% { transform: scale(1.1) translateZ(50px); opacity: 1; filter: brightness(1.3); } }
+
+        /* Form Card Shared Styles */
+        .auth-card-container { position: relative; padding: 1px; border-radius: 45px; overflow: hidden; background: rgba(255, 255, 255, 0.03); }
+        .auth-card-container::before { content: ''; position: absolute; width: 160%; height: 160%; background: conic-gradient(transparent, transparent, var(--accent), transparent); top: -30%; left: -30%; animation: borderRotate 8s linear infinite; z-index: 0; }
+        @keyframes borderRotate { 100% { transform: rotate(360deg); } }
+        .auth-card { background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(60px); border-radius: 44px; padding: 60px; position: relative; z-index: 1; transform-style: preserve-3d; box-shadow: inset 0 0 30px rgba(255,255,255,0.03); }
+        .auth-card h2 { font-family: 'Syncopate', sans-serif; font-size: 14px; margin-bottom: 40px; text-align: center; letter-spacing: 15px; color: var(--accent); text-shadow: 0 0 15px var(--accent-glow); opacity: 0.9; }
+
+        .input-box { margin-bottom: 20px; position: relative; }
+        .input-box input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px 25px; border-radius: 20px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1); }
+        .input-box input:focus { background: rgba(255,255,255,0.08); border-color: var(--accent); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-2px); }
+
+        .btn-wrap { position: relative; width: 100%; height: 60px; margin-top: 15px; }
+        .btn-magnetic { width: 100%; height: 100%; border-radius: 20px; border: none; background: var(--accent); color: #000; font-weight: 800; font-family: 'Syncopate', sans-serif; font-size: 12px; letter-spacing: 5px; cursor: none; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
+        .btn-magnetic:hover { background: #fff; letter-spacing: 7px; box-shadow: 0 0 50px var(--accent-glow); }
+
+        .footer-link { margin-top: 30px; text-align: center; font-size: 11px; opacity: 0.4; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+        .footer-link a { color: var(--danger); font-weight: bold; text-decoration: none; margin-left: 8px; transition: 0.3s; }
+        .footer-link a:hover { opacity: 1; color: #fff; }
+
+        .error { margin-top: 20px; color: var(--danger); text-align: center; font-size: 11px; font-family: 'JetBrains Mono'; letter-spacing: 1px; }
+        .success { margin-top: 20px; color: var(--success); text-align: center; font-size: 11px; font-family: 'JetBrains Mono'; letter-spacing: 1px; }
+
+        @media (max-width: 1000px) { .main-wrapper { grid-template-columns: 1fr; text-align: center; gap: 40px; height: auto; overflow-y: auto; padding: 20px; } .brand-section { align-items: center; } .auth-card-container { width: 100%; max-width: 480px; margin: 0 auto; } }
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div id="cursor-follower"></div>
+    <div id="cursor-main"></div>
+    <div class="noise"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="main-wrapper" id="parallax-scene">
+        <div class="brand-section" data-depth="0.1">
+            <div class="subtitle">Luxury Ecommerce</div>
+            <h1>SRIA</h1>
+            <div class="core-visual">
+                <div class="logo-container">
+                    <div class="logo-circle circle-top"></div>
+                    <div class="logo-circle circle-right"></div>
+                    <div class="logo-circle circle-bottom"></div>
+                    <div class="logo-circle circle-left"></div>
+                </div>
+            </div>
+            <p style="opacity: 0.3; font-size: 11px; max-width: 400px; line-height: 1.8; margin-top: 35px; font-family: 'JetBrains Mono'; text-transform: uppercase; letter-spacing: 1px;">
+                {% block brand_description %}Architecture of Digital Elegance.{% endblock %}
+            </p>
+        </div>
+
+        <div class="auth-card-container" data-depth="0.3">
+            <div class="auth-card">
+                <h2>{% block card_title %}{% endblock %}</h2>
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        function playBeep(f, t, d, v) {
+            if (!audioCtx) return;
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + d);
+        }
+
+        const cursorFollower = document.getElementById('cursor-follower');
+        const cursorMain = document.getElementById('cursor-main');
+        let mouseX = -100, mouseY = -100, followerX = -100, followerY = -100, firstMove = false;
+
+        window.addEventListener('mousemove', (e) => {
+            if (!firstMove) { firstMove = true; cursorFollower.style.opacity = "1"; cursorMain.style.opacity = "1"; initAudio(); }
+            mouseX = e.clientX; mouseY = e.clientY;
+            cursorMain.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+            const x = (e.clientX - window.innerWidth / 2) / 60;
+            const y = (e.clientY - window.innerHeight / 2) / 60;
+            document.querySelectorAll('[data-depth]').forEach(el => {
+                const d = el.getAttribute('data-depth');
+                el.style.transform = `translate3d(${x*d*12}px, ${y*d*12}px, 0) rotateY(${x*0.15}deg) rotateX(${-y*0.15}deg)`;
+            });
+        });
+
+        function animateCursor() {
+            if (firstMove) {
+                followerX += (mouseX - followerX) * 0.18; followerY += (mouseY - followerY) * 0.18;
+                cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px)`;
+            }
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Magnetic Button Logic
+        const btnW = document.querySelector('.btn-wrap');
+        const btnM = document.querySelector('.btn-magnetic');
+        if(btnW && btnM) {
+            btnW.addEventListener('mousemove', (e) => {
+                const r = btnW.getBoundingClientRect();
+                const x = e.clientX - r.left - r.width/2;
+                const y = e.clientY - r.top - r.height/2;
+                btnM.style.transform = `translate(${x * 0.4}px, ${y * 0.6}px)`;
+                cursorFollower.style.width = '70px'; cursorFollower.style.height = '70px';
+                cursorFollower.style.marginLeft = '-12px'; cursorFollower.style.marginTop = '-12px';
+                cursorFollower.style.borderColor = "#fff";
+            });
+            btnW.addEventListener('mouseleave', () => {
+                btnM.style.transform = `translate(0,0)`;
+                cursorFollower.style.width = '45px'; cursorFollower.style.height = '45px';
+                cursorFollower.style.marginLeft = '0'; cursorFollower.style.marginTop = '0';
+                cursorFollower.style.borderColor = "var(--accent)";
+            });
+        }
+
+        // Particle System
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let pts = [];
+        function initParticles() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            pts = Array.from({length: 70}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25, size: Math.random() * 1.5 }));
+        }
+        function drawParticles() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            pts.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x<0 || p.x>canvas.width) p.vx*=-1; if(p.y<0 || p.y>canvas.height) p.vy*=-1;
+                ctx.fillStyle = 'rgba(212, 189, 168, 0.25)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+                for(let j=i+1; j<pts.length; j++) {
+                    const d = Math.hypot(p.x-pts[j].x, p.y-pts[j].y);
+                    if(d < 190) { ctx.strokeStyle = `rgba(212, 189, 168, ${0.12 * (1-d/190)})`; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke(); }
+                }
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        initParticles(); drawParticles();
+        window.addEventListener('resize', initParticles);
+
+        // Sound interaction
+        document.querySelectorAll('input').forEach(i => {
+            i.addEventListener('input', () => playBeep(1300 + Math.random()*200, 'sine', 0.05, 0.02));
+            i.addEventListener('focus', () => playBeep(900, 'sine', 0.1, 0.02));
+        });
+    </script>
+</body>
+</html>

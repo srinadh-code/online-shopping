@@ -1,10 +1,16 @@
-from django.db.models import Avg, Min, Max
+from django.db.models import Avg, Min, Max,Count
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 
 from django.utils import timezone
 from datetime import timedelta
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Order, ReturnRequest
+from django.utils import timezone
+from datetime import timedelta
+from .utils import mark_order_delivered
 from .models import (
     Category,
     SubCategory,
@@ -20,52 +26,38 @@ from .models import (
 
 @login_required
 def dashboardview(request):
-
     # USER INFO
     username = request.user.username
-
     # CATEGORIES WITH SUBCATEGORIES
     categories = Category.objects.prefetch_related("subcategories").all()
-
-
     # WISHLIST
     wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
 
     wishlist_product_ids = list(
         wishlist.items.values_list("product_id", flat=True)
     )
-
     wishlist_count = wishlist.items.count()
-
-
-    # ================= FINAL SEARCH LOGIC =================
-
+    
+    
+    # SEARCH functionility
     query = request.GET.get('q', '').strip()
-
     if query:
-
-        # 1️PRODUCT EXACT MATCH → OPEN PRODUCT DETAIL
+        # product exact match → OPEN PRODUCT DETAIL
         product = Product.objects.filter(
             name__iexact=query
         ).first()
-
         if product:
             return redirect('product_detail', product_id=product.id)
-
-
-        # 2 SUBCATEGORY MATCH → SHOW PRODUCTS
+        #  subcategory → SHOW PRODUCTS
         subcategory = SubCategory.objects.filter(
             name__icontains=query
         ).first()
-
         if subcategory:
             return redirect(
                 'subcategory',
                 subcategory_id=subcategory.id
             )
-
-
-        # 3 CATEGORY MATCH → SHOW SUBCATEGORIES
+        #  CATEGORY MATCH → SHOW SUBCATEGORIES
         category = Category.objects.filter(
             name__icontains=query
         ).first()
@@ -75,15 +67,11 @@ def dashboardview(request):
                 'category',
                 category_id=category.id
             )
-
-
         # 4️ PARTIAL PRODUCT SEARCH → SHOW RESULTS PAGE
         products = Product.objects.filter(
             name__icontains=query
         )
-
         if products.exists():
-
             return render(request, "products.html", {
                 "products": products,
                 "title": f"Search Results for '{query}'",
@@ -93,49 +81,50 @@ def dashboardview(request):
 
 
     # RECENTLY VIEWED 
-
     recent_ids = request.session.get('recently_viewed', [])
-
     recently_viewed_queryset = Product.objects.filter(
         id__in=recent_ids
     )
-
     recently_viewed = sorted(
         recently_viewed_queryset,
         key=lambda x: recent_ids.index(x.id)
     )
-
-
     # RECOMMENDED 
-
     recommended = Product.objects.exclude(
         id__in=recent_ids
     ).order_by('?')[:4]
+    # TRENDING PRODUCTS (Most Added To Cart)
+    trending_products = Product.objects.annotate(
+    cart_count=Count('cartitem')
+    ).order_by('-cart_count')[:4]
 
+
+# HOT DEAL PRODUCTS (Least Added To Cart + Wishlist)
+    hot_deals = Product.objects.annotate(
+    cart_count=Count('cartitem'),
+    wishlist_count=Count('wishlistitem')
+    ).order_by('cart_count', 'wishlist_count')[:4]
 
     #  JUST ARRIVED
-
     just_arrived = Product.objects.order_by('-id')[:8]
+    cart, _ = Cart.objects.get_or_create(user=request.user)
 
-
+    
+    cart_count = cart.items.count()
     # FINAL RENDER 
 
     context = {
-
         "username": username,
         "categories": categories,
-
         "recently_viewed": recently_viewed,
         "recommended": recommended,
-
         "just_arrived": just_arrived,
-
         "wishlist_product_ids": wishlist_product_ids,
-
-        "wishlist_count": wishlist_count
-
+        "wishlist_count": wishlist_count,
+        "cart_count": cart_count ,
+        "trending_products": trending_products,
+        "hot_deals": hot_deals,
     }
-
     return render(request, "dashboard.html", context)
 
 @login_required
@@ -169,8 +158,6 @@ def subcategory_view(request, subcategory_id):
         ]
     else:
         price_ranges = []
-
-
     price_range = request.GET.get("price_range")
 
     if price_range:
@@ -225,9 +212,6 @@ def product_detail(request, product_id):
     ).exists()
 
     #review submit 
-
-    
-
     if request.method == "POST":
         print(request.POST)
         rating = request.POST.get("rating")
@@ -352,7 +336,7 @@ def my_orders(request):
 
         diff = now - order.created_at
 
-        if diff >= timedelta(minutes=1):
+        if diff >= timedelta(minutes=2):
             order.status = "Delivered"
 
         elif diff >= timedelta(minutes=1):
@@ -385,7 +369,8 @@ def wishlist_view(request):
     return render(request, "wishlist.html", {
         "items": items
     })
-from django.http import JsonResponse
+    
+
 @login_required
 def toggle_wishlist(request, product_id):
 
@@ -408,8 +393,8 @@ def toggle_wishlist(request, product_id):
             product=product
         )
         status = "added"
-
     return JsonResponse({"status": status})
+
 @login_required
 def remove_from_wishlist(request, item_id):
 
@@ -435,16 +420,29 @@ def order_success(request):
         "is_first_order": is_first_order
     })
 
+
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Order, ReturnRequest
+from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
+from .models import ReturnRequest
 
+@login_required
 def return_request(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # 🔥 7-day policy
-    if order.created_at < timezone.now() - timedelta(days=7):
+    #  Only allow if delivered
+    if order.status != "Delivered":
+        return redirect("my_orders")
+    
+    if not order.delivered_at:
+        return redirect("my_orders")
+
+    if order.delivered_at < timezone.now() - timedelta(days=7):
+        return redirect("my_orders")
+
+    #  Prevent duplicate return
+    if ReturnRequest.objects.filter(order=order).exists():
         return redirect("my_orders")
 
     if request.method == "POST":
@@ -462,12 +460,52 @@ def return_request(request, order_id):
 
         return redirect("my_orders")
 
-    return render(request, "return_form.html", {"order": order})  
+    return render(request, "return_form.html", {"order": order})
 def save_model(self, request, obj, form, change):
+
     if obj.status == "Approved":
         obj.refund_status = "Completed"
+
     super().save_model(request, obj, form, change)
 def my_returns(request):
     returns = ReturnRequest.objects.filter(user=request.user)
-    return render(request, "my_returns.html", {"returns": returns})   
-  
+    return render(request, "my_returns.html", {"returns": returns}) 
+from .models import Profile
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+
+@login_required
+def profile(request):
+
+    profile, created = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        profile.phone = request.POST.get("phone")
+        profile.address = request.POST.get("address")
+        profile.city = request.POST.get("city")
+        profile.state = request.POST.get("state")
+        profile.pincode = request.POST.get("pincode")
+
+        if request.FILES.get("profile_image"):
+            profile.profile_image = request.FILES.get("profile_image")
+
+        profile.save()
+
+        return redirect("profile")
+
+    return render(request, "profile.html", {"profile": profile})
+
+
+from .utils import mark_order_delivered
+from django.shortcuts import redirect
+
+def mark_delivered(request, order_id):
+
+    order = Order.objects.get(id=order_id)
+
+    order.status = "Delivered"
+    order.save()
+
+    mark_order_delivered(order)
+
+    return redirect("admin_orders")

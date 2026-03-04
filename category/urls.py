@@ -30,6 +30,6 @@ urlpatterns = [
     path('return-request/<int:order_id>/', views.return_request, name='return_request'),
     path('my-returns/', views.my_returns, name='my_returns'),
     path("cancel-order/<int:order_id>/", views.cancel_order, name="cancel_order"),
-
+    path("profile/", views.profile, name="profile")
 ]
 

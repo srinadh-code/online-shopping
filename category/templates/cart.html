@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% comment %} <!DOCTYPE html>
 <html>
 <head>
     <title>Your Cart</title>
@@ -210,6 +210,463 @@
     {% endif %}
 
 </div>
+
+</body>
+</html> {% endcomment %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Cart | SRIA NEXT GEN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500&family=Inter:wght@200;400;600&display=swap');
+
+        :root {
+            --accent: #d4bda8;
+            --accent-dark: #b89f88;
+            --accent-glow: rgba(212, 189, 168, 0.4);
+            --bg-main: #fcfcfc;
+            --bg-card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #666666;
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 20px 50px rgba(212, 189, 168, 0.15);
+            --danger: #ff6b6b;
+            --success: #2a9d8f;
+        }
+
+        html, body {
+            cursor: none !important;
+        }
+
+        a, button, input, label {
+            cursor: none !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* PREMIUM CURSOR */
+        #cursor-follower {
+            width: 45px;
+            height: 45px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20000;
+            transition: transform 0.15s ease-out, opacity 0.3s ease;
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px var(--accent-glow);
+            opacity: 0;
+            display: block;
+        }
+
+        #cursor-main {
+            width: 8px;
+            height: 8px;
+            background: var(--text-main);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20001;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            display: block;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            opacity: 0.04;
+            pointer-events: none;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header strong {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* MAIN LAYOUT */
+        .container {
+            max-width: 1300px;
+            margin: 60px auto;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 60px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .back-nav {
+            grid-column: span 2;
+            margin-bottom: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            text-decoration: none;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .back-nav:hover { color: var(--accent); transform: translateX(-5px); }
+
+        /* CART ITEMS BOX */
+        .cart-box {
+            background: white;
+            padding: 50px;
+            border-radius: 40px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--glass-border);
+        }
+
+        .cart-box h2 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 20px;
+            letter-spacing: 6px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px 0;
+            border-bottom: 1px solid #f5f5f5;
+            transition: 0.3s;
+        }
+
+        .cart-item:last-of-type { border-bottom: none; }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+        }
+
+        .item-left img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            background: #fcfcfc;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            transition: 0.4s;
+        }
+
+        .cart-item:hover .item-left img {
+            transform: scale(1.05);
+            border-color: var(--accent);
+        }
+
+        .item-details h4 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .item-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            color: var(--accent-dark);
+            font-weight: 500;
+        }
+
+        .item-quantity {
+            margin-top: 12px;
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-sub);
+            background: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 50px;
+        }
+
+        /* REMOVE BUTTON */
+        .remove-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        /* SUMMARY BOX */
+        .summary-box-container {
+            position: relative;
+            padding: 1px;
+            border-radius: 40px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            height: fit-content;
+        }
+
+        .summary-box-container::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: conic-gradient(transparent, transparent, var(--accent), transparent);
+            top: -25%;
+            left: -25%;
+            animation: borderRotate 10s linear infinite;
+        }
+
+        @keyframes borderRotate { 100% { transform: rotate(360deg); } }
+
+        .summary-box {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 39px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-box h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            margin-bottom: 35px;
+            text-transform: uppercase;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .summary-line.total {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+            color: var(--text-main);
+            font-size: 18px;
+        }
+
+        .summary-line strong {
+            font-family: 'Syncopate', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* CHECKOUT BUTTON */
+        .checkout-btn {
+            width: 100%;
+            padding: 22px;
+            background: var(--text-main);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            margin-top: 20px;
+        }
+
+        .checkout-btn:hover {
+            background: var(--accent);
+            color: black;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--accent-glow);
+        }
+
+        .empty-cart-msg {
+            padding: 100px 0;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0.4;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 1100px) {
+            .container { grid-template-columns: 1fr; }
+            .header { padding: 15px 25px; }
+            .cart-box { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursor-follower"></div>
+<div id="cursor-main"></div>
+<div class="noise"></div>
+
+<!-- HEADER -->
+<div class="header">
+    <strong>SRIA</strong>
+    <div style="font-family: 'JetBrains Mono'; font-size: 11px; opacity: 0.6; text-transform: uppercase;">
+        Member: {{ request.user.username }}
+    </div>
+</div>
+
+<div class="container">
+    <a href="{% url 'dashboard' %}" class="back-nav">← Continue_Shopping</a>
+
+    <!-- CART ITEMS -->
+    <div class="cart-box">
+        <h2>Your Bag</h2>
+
+        {% for item in items %}
+            <div class="cart-item">
+                <div class="item-left">
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                    <div class="item-details">
+                        <h4>{{ item.product.name }}</h4>
+                        <span class="item-price">₹{{ item.product.price }}</span>
+                        <br>
+                        <div class="item-quantity">
+                            Quantity: {{ item.quantity }}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'remove_from_cart' item.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="remove-btn">Discard</button>
+                </form>
+            </div>
+        {% empty %}
+            <div class="empty-cart-msg">
+                // Your bag is empty.
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- SUMMARY SECTION -->
+    {% if items %}
+    <div class="summary-box-container">
+        <div class="summary-box">
+            <h3>Order_Manifest</h3>
+
+            <div class="summary-line">
+                <span>Items_Count</span>
+                <span>{{ items|length }}</span>
+            </div>
+
+            <div class="summary-line total">
+                <strong>Grand_Total</strong>
+                <strong>₹{{ total }}</strong>
+            </div>
+
+            <form method="POST" action="{% url 'place_order' %}">
+                {% csrf_token %}
+                <button type="submit" class="checkout-btn">Checkout</button>
+            </form>
+
+            <div style="margin-top: 30px; font-family: 'JetBrains Mono'; font-size: 9px; opacity: 0.3; text-align: center; letter-spacing: 1px;">
+                SECURE_ENCRYPTED_TRANSACTION_V2.0
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // PREMIUM CURSOR LOGIC
+    const cursorFollower = document.getElementById('cursor-follower');
+    const cursorMain = document.getElementById('cursor-main');
+    let mouseX = -100, mouseY = -100, followerX = -100, followerY = -100, firstMove = false;
+
+    window.addEventListener('mousemove', (e) => {
+        if (!firstMove) { 
+            firstMove = true; 
+            cursorFollower.style.opacity = "1"; 
+            cursorMain.style.opacity = "1"; 
+        }
+        mouseX = e.clientX; 
+        mouseY = e.clientY;
+        cursorMain.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+    });
+
+    function animateCursor() {
+        if (firstMove) {
+            followerX += (mouseX - followerX) * 0.15;
+            followerY += (mouseY - followerY) * 0.15;
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px)`;
+        }
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // INTERACTION FEEDBACK
+    document.querySelectorAll('.checkout-btn, .remove-btn, a, .item-left img').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px) scale(1.5)`;
+            cursorFollower.style.borderColor = "#fff";
+        });
+        el.addEventListener('mouseleave', () => {
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px) scale(1)`;
+            cursorFollower.style.borderColor = "var(--accent)";
+        });
+    });
+</script>
 
 </body>
 </html>

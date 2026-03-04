@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% comment %} <!DOCTYPE html>
 <html>
 <head>
     <title>{{ product.name }}</title>
@@ -378,28 +378,566 @@ stars.forEach((star, index) => {
 });
 
 
-// stars.forEach(star => {
-
-//     star.addEventListener("mouseover", function(){
-//         let val = this.dataset.value;
-//         highlight(val);
-//         console.log("js load");
-//     });
-
-//     star.addEventListener("click", function(){
-//         ratingInput.value = this.dataset.value;
-//     });
-
-// });
-
-// function highlight(val){
-//     stars.forEach(s => s.classList.remove("active"));
-//     for(let i=0;i<val;i++){
-//         stars[i].classList.add("active");
-//     }
-// }
 
 
+
+</script>
+
+</body>
+</html> {% endcomment %}
+
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ product.name }} | SRIA NEXT GEN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500&family=Inter:wght@200;400;600&display=swap');
+
+        :root {
+            --accent: #d4bda8;
+            --accent-dark: #b89f88;
+            --accent-glow: rgba(212, 189, 168, 0.4);
+            --bg-main: #fcfcfc;
+            --bg-card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #666666;
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.03);
+            --danger: #ff6b6b;
+            --success: #00ffaa;
+            --gold: #d4af37;
+        }
+
+        html, body {
+            cursor: none !important;
+        }
+
+        a, button, input, label, textarea {
+            cursor: none !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* PREMIUM CURSOR */
+        #cursor-follower {
+            width: 45px;
+            height: 45px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20000;
+            transition: transform 0.15s ease-out, opacity 0.3s ease;
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px var(--accent-glow);
+            opacity: 0;
+            display: block;
+        }
+
+        #cursor-main {
+            width: 8px;
+            height: 8px;
+            background: var(--text-main);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20001;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            display: block;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            opacity: 0.04;
+            pointer-events: none;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header strong {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .back-nav {
+            display: inline-flex;
+            align-items: center;
+            margin: 40px 0 20px 40px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            text-decoration: none;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .back-nav:hover { color: var(--accent); transform: translateX(-5px); }
+
+        /* PRODUCT CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto 60px auto;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            background: white;
+            border-radius: 40px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--glass-border);
+            position: relative;
+            z-index: 3;
+        }
+
+        .image-box {
+            position: relative;
+            border-radius: 30px;
+            overflow: hidden;
+            background: #fcfcfc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-box img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            transition: 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .image-box:hover img { transform: scale(1.08); }
+
+        .wishlist-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            z-index: 10;
+        }
+
+        .wishlist-btn:hover { transform: scale(1.15); box-shadow: 0 15px 40px rgba(212, 189, 168, 0.3); }
+
+        /* DETAILS */
+        .details h2 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 32px;
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            line-height: 1.1;
+        }
+
+        .price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            color: var(--accent-dark);
+            font-weight: 500;
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .description {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-sub);
+            margin-bottom: 35px;
+            border-left: 2px solid var(--accent);
+            padding-left: 20px;
+        }
+
+        /* QUANTITY */
+        .quantity-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f5f5f5;
+            padding: 5px;
+            border-radius: 50px;
+            width: fit-content;
+            margin-bottom: 40px;
+        }
+
+        .quantity-box button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: white;
+            color: var(--text-main);
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .quantity-box button:hover { background: var(--accent); color: white; }
+
+        .quantity-box input {
+            width: 50px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* BUTTONS */
+        .buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .btn-cart {
+            background: var(--text-main);
+            color: white;
+        }
+
+        .btn-cart:hover { background: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 30px var(--accent-glow); }
+
+        .btn-buy {
+            background: var(--accent);
+            color: black;
+        }
+
+        .btn-buy:hover { background: var(--text-main); color: white; transform: translateY(-5px); }
+
+        /* REVIEWS SECTION */
+        .reviews-container {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .reviews-container h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 16px;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .avg-rating {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            margin-bottom: 30px;
+            color: var(--accent-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .star {
+            font-size: 28px;
+            color: #ddd;
+            transition: 0.3s;
+        }
+
+        .star.active { color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: #fcfcfc;
+            min-height: 120px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        textarea:focus { border-color: var(--accent); background: white; box-shadow: var(--shadow-soft); }
+
+        .submit-review {
+            padding: 15px 35px;
+            background: var(--text-main);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .submit-review:hover { background: var(--accent); }
+
+        .review-item {
+            margin-top: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .review-user {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .review-comment {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+
+        @media(max-width:900px){
+            .container { grid-template-columns: 1fr; gap: 40px; padding: 20px; }
+            .header { padding: 15px 20px; }
+            .back-nav { margin-left: 20px; }
+            .details h2 { font-size: 24px; }
+            .buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursor-follower"></div>
+<div id="cursor-main"></div>
+<div class="noise"></div>
+
+<!-- HEADER -->
+<div class="header">
+    <strong>SRIA</strong>
+    <div style="font-family: 'JetBrains Mono'; font-size: 11px; opacity: 0.6; text-transform: uppercase;">Member: {{ request.user.username }}</div>
+</div>
+
+<a href="{% url 'dashboard' %}" class="back-nav">← Dashboard</a>
+
+<div class="container" id="parallax-scene">
+    <!-- IMAGE SECTION -->
+    <div class="image-box">
+        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+
+        <button 
+            id="wishlist-btn" 
+            class="wishlist-btn" 
+            onclick="toggleWishlist({{ product.id }})">
+            {% if in_wishlist %}❤️{% else %}🤍{% endif %}
+        </button>
+    </div>
+
+    <!-- DETAILS SECTION -->
+    <div class="details">
+        <h2>{{ product.name }}</h2>
+        <span class="price">₹{{ product.price }}</span>
+
+        <div class="description">
+            {{ product.description }}
+        </div>
+
+        <form method="POST" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+
+            <div class="quantity-box">
+                <button type="button" onclick="decrease()">-</button>
+                <input type="number" name="quantity" id="quantity" value="1" min="1">
+                <button type="button" onclick="increase()">+</button>
+            </div>
+
+            <div class="buttons">
+                <button type="submit" class="btn btn-cart">Add to Bag</button>
+                <button type="submit" formaction="{% url 'buy_now' product.id %}" class="btn btn-buy">Buy Now</button>
+            </div>
+        </form>
+
+        <!-- REVIEWS -->
+        <div class="reviews-container">
+            <h3>Reviews</h3>
+            
+            <div class="avg-rating">
+                Average Score: 
+                {% if avg_rating %}
+                    {{ avg_rating|floatformat:1 }} <span style="color: var(--gold);">★</span>
+                {% else %}
+                    No ratings yet
+                {% endif %}
+            </div>
+
+            {% if user.is_authenticated %}
+            <form method="POST" style="margin-bottom: 40px;">
+                {% csrf_token %}
+                <input type="hidden" name="rating" id="rating-input">
+
+                <div class="star-rating">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+
+                <textarea name="comment" placeholder="Your experience..."></textarea>
+                <button type="submit" class="submit-review">Post Review</button>
+            </form>
+            {% endif %}
+
+            <div class="reviews-list">
+                {% for review in reviews %}
+                    <div class="review-item">
+                        <span class="review-user">{{ review.user.username }}</span>
+                        <div style="margin-bottom: 5px; color: var(--gold);">
+                            {% for i in "12345"|slice:":review.rating" %}★{% endfor %}
+                        </div>
+                        <p class="review-comment">{{ review.comment }}</p>
+                    </div>
+                {% empty %}
+                    <p style="opacity: 0.5; font-size: 13px;">Be the first to review this piece.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CURSOR LOGIC
+    const cursorFollower = document.getElementById('cursor-follower');
+    const cursorMain = document.getElementById('cursor-main');
+    let mouseX = -100, mouseY = -100, followerX = -100, followerY = -100, firstMove = false;
+
+    window.addEventListener('mousemove', (e) => {
+        if (!firstMove) { firstMove = true; cursorFollower.style.opacity = "1"; cursorMain.style.opacity = "1"; }
+        mouseX = e.clientX; mouseY = e.clientY;
+        cursorMain.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+    });
+
+    function animateCursor() {
+        if (firstMove) {
+            followerX += (mouseX - followerX) * 0.15;
+            followerY += (mouseY - followerY) * 0.15;
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px)`;
+        }
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // INTERACTIVE QUANTITY
+    function increase(){
+        let qty = document.getElementById("quantity");
+        qty.value = parseInt(qty.value) + 1;
+    }
+
+    function decrease(){
+        let qty = document.getElementById("quantity");
+        if(parseInt(qty.value) > 1){ qty.value = parseInt(qty.value) - 1; }
+    }
+
+    // WISHLIST TOGGLE
+    function toggleWishlist(productId){
+        fetch(`/toggle-wishlist/${productId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const btn = document.getElementById("wishlist-btn");
+            btn.innerHTML = (data.status === "added") ? "❤️" : "🤍";
+        });
+    }
+
+    // STAR RATING LOGIC
+    document.addEventListener("DOMContentLoaded", function(){
+        const stars = document.querySelectorAll(".star");
+        const ratingInput = document.getElementById("rating-input");
+
+        stars.forEach(star => {
+            star.addEventListener("click", () => {
+                let value = star.getAttribute("data-value");
+                ratingInput.value = value;
+                stars.forEach(s => s.classList.remove("active"));
+                for (let i = 0; i < value; i++) {
+                    stars[i].classList.add("active");
+                }
+            });
+
+            star.addEventListener("mouseenter", () => {
+                let value = star.getAttribute("data-value");
+                stars.forEach((s, i) => {
+                    if(i < value) s.style.color = "var(--gold)";
+                    else s.style.color = "#ddd";
+                });
+            });
+
+            star.addEventListener("mouseleave", () => {
+                stars.forEach(s => {
+                    s.style.color = s.classList.contains("active") ? "var(--gold)" : "#ddd";
+                });
+            });
+        });
+    });
 </script>
 
 </body>

@@ -1,167 +1,42 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "base.html" %}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+{% block title %}Join | SRIA Luxury{% endblock %}
 
-        {% comment %} body {
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #4e1d75, #7b2cbf, #9d4edd);
-        } {% endcomment %}
+{% block card_title %}Register{% endblock %}
 
-                body {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background:
-        linear-gradient(rgba(27, 25, 25, 0.5), rgba(30, 28, 28, 0.5)),
-        url("{% static 'images/bg.jpg' %}") no-repeat center center;
-    background-size: cover;
-    font-family: sans-serif;
-}
+{% block brand_description %}
+Join the elite collective. <br>
+Begin your journey into high-fidelity luxury.
+{% endblock %}
 
-        .card {
-            width: 360px;
-            padding: 40px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
-            text-align: center;
-            color: white;
-        }
-
-        .card h2 {
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 25px;
-            border: none;
-            outline: none;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            font-size: 14px;
-        }
-        
-
-        .input-group input::placeholder {
-            color: #ddd;
-        }
-
-        .error {
-            color: #ff6b6b;
-            font-size: 13px;
-            margin-top: 5px;
-            text-align: left;
-        }
-
-        .register-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 25px;
-            border: none;
-            background: white;
-            color: #6a11cb;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s ease;
-        }
-
-        .register-btn:hover {
-            background: #eee;
-        }
-
-        .success {
-            margin-top: 15px;
-            color: #00ff99;
-        }
-
-        .bottom-text {
-            margin-top: 20px;
-            font-size: 14px;
-        }
-
-        .bottom-text a {
-            color: #00ff99;
-            font-weight: bold;
-            text-decoration: none;
-            
-        }
-
-        @media(max-width: 400px){
-            .card{
-                width: 90%;
-                padding: 30px;
-            }
-        }
-
-    </style>
-</head>
-<body>
-
-<div class="card">
-
-    <h2>Register</h2>
-
-    <form method="POST">
-        {% csrf_token %}
-
-        <div class="input-group">
-            <input type="text" name="username" placeholder="Username">
-            {% if errors.username %}
-                <div class="error">{{ errors.username.0 }}</div>
-            {% endif %}
-        </div>
-
-        <div class="input-group">
-            <input type="email" name="email" placeholder="Email">
-            {% if errors.email %}
-                <div class="error">{{ errors.email.0 }}</div>
-            {% endif %}
-        </div>
-
-        <div class="input-group">
-            <input type="password" name="password" placeholder="Password">
-            {% if errors.password %}
-                <div class="error">{{ errors.password.0 }}</div>
-            {% endif %}
-        </div>
-
-        <button type="submit" class="register-btn">Register</button>
-    </form>
-
-    {% if message %}
-        <div class="success">{{ message }}</div>
-    {% endif %}
-
-    <div class="bottom-text">
-        Already have an account? 
-        <a href="{% url 'login' %}">Login</a>
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    <div class="input-box">
+        <input type="text" name="username" placeholder="Choose Username" required autocomplete="off">
     </div>
 
+    <div class="input-box">
+        <input type="email" name="email" placeholder="Email Address" required>
+    </div>
+
+    <div class="input-box">
+        <input type="password" name="password" placeholder="Password" required>
+    </div>
+
+    <div class="input-box">
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+    </div>
+
+    <div class="btn-wrap">
+        <button type="submit" class="btn-magnetic">Create Account</button>
+    </div>
+</form>
+
+<div class="footer-link">
+    Already a member? 
+    <a href="{% url 'login' %}">Sign In</a>
 </div>
 
-</body>
-</html>
+{% if error %}<p class="error">> {{ error }}</p>{% endif %}
+{% endblock %}

@@ -1,4 +1,4 @@
-
+{% comment %} 
 
 
 
@@ -227,13 +227,13 @@ Order #{{ order.id }}
 <!-- STATUS -->
 
 {% if order.status == "Placed" %}
-<div class="status placed">🟡 Placed</div>
+<div class="status placed">Order Placed</div>
 
 {% elif order.status == "Shipped" %}
-<div class="status shipped">🚚 Shipped</div>
+<div class="status shipped">🚚 Shipped to nearest HUB</div>
 
 {% elif order.status == "Delivered" %}
-<div class="status delivered">✅ Delivered</div>
+<div class="status delivered">Delivered</div>
 
 {% elif order.status == "Cancelled" %}
 <div class="status cancelled">❌ Cancelled</div>
@@ -308,6 +308,801 @@ Refund: {{ r.refund_status }}
 
 <h3>No Orders Yet</h3>
 
+</div>
+
+{% endfor %}
+
+<a href="{% url 'dashboard' %}" class="back">
+← Back to Dashboard
+</a>
+
+</div>
+
+<!-- AUTO REFRESH -->
+
+<script>
+
+setInterval(function(){
+
+fetch(window.location.href)
+.then(res => res.text())
+.then(html => {
+
+let doc = new DOMParser().parseFromString(html,"text/html");
+
+document.querySelector(".container").innerHTML =
+doc.querySelector(".container").innerHTML;
+
+});
+
+},10000);
+
+</script>
+
+</body>
+</html> {% endcomment %}
+
+
+
+
+
+
+{% comment %} 
+
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders | SRIA NEXT GEN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500&family=Inter:wght@200;400;600&display=swap');
+
+        :root {
+            --accent: #d4bda8;
+            --accent-dark: #b89f88;
+            --accent-glow: rgba(212, 189, 168, 0.4);
+            --bg-main: #fcfcfc;
+            --bg-card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #666666;
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 20px 50px rgba(212, 189, 168, 0.15);
+            --danger: #ff6b6b;
+            --success: #2a9d8f;
+            --warning: #ffcc00;
+            --info: #4a90e2;
+        }
+
+        html, body {
+            cursor: none !important;
+        }
+
+        a, button, input {
+            cursor: none !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* PREMIUM CURSOR */
+        #cursor-follower {
+            width: 45px;
+            height: 45px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20000;
+            transition: transform 0.15s ease-out, opacity 0.3s ease;
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px var(--accent-glow);
+            opacity: 0;
+            display: block;
+        }
+
+        #cursor-main {
+            width: 8px;
+            height: 8px;
+            background: var(--text-main);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 20001;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            display: block;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            opacity: 0.04;
+            pointer-events: none;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header strong {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .back-nav {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            text-decoration: none;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .back-nav:hover { color: var(--accent); transform: translateX(-5px); }
+
+        /* ORDER CARD */
+        .order-card {
+            background: white;
+            border-radius: 30px;
+            margin-bottom: 25px;
+            padding: 35px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--glass-border);
+            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-left-width: 8px;
+        }
+
+        .order-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .order-id {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .order-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .item {
+            font-size: 14px;
+            color: var(--text-main);
+            margin-top: 6px;
+            opacity: 0.8;
+        }
+
+        /* STATUS BADGES */
+        .status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .status.placed { background: rgba(212, 189, 168, 0.1); color: var(--accent-dark); }
+        .status.shipped { background: rgba(74, 144, 226, 0.1); color: var(--info); }
+        .status.delivered { background: rgba(42, 157, 143, 0.1); color: var(--success); }
+        .status.cancelled { background: rgba(255, 107, 107, 0.1); color: var(--danger); }
+
+        /* RIGHT SECTION */
+        .right { text-align: right; }
+
+        .price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .discount-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        /* BUTTONS */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        .btn-return {
+            background: #f5f5f5;
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-return:hover {
+            background: var(--accent);
+            color: black;
+            border-color: var(--accent);
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-cancel:hover {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        /* RETURN STATUS BOX */
+        .return-box {
+            margin-top: 25px;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            border: 1px dashed var(--glass-border);
+            line-height: 1.8;
+            color: var(--text-sub);
+        }
+
+        .return-box b { color: var(--text-main); letter-spacing: 1px; }
+
+        /* EMPTY STATE */
+        .empty {
+            text-align: center;
+            padding: 100px 40px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: var(--shadow-soft);
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0.4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .order-content { flex-direction: column; }
+            .right { text-align: left; margin-top: 25px; }
+            .header { padding: 15px 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursor-follower"></div>
+<div id="cursor-main"></div>
+<div class="noise"></div>
+
+<!-- HEADER -->
+<div class="header">
+    <strong>SRIA</strong>
+    <div style="font-family: 'JetBrains Mono'; font-size: 11px; opacity: 0.6; text-transform: uppercase;">
+        Order History
+    </div>
+</div>
+
+<div class="container">
+    <a href="{% url 'dashboard' %}" class="back-nav">← Dashboard</a>
+
+    {% for order in orders %}
+        <div class="order-card">
+            <div class="order-content">
+                <div>
+                    <div class="order-id">Order #{{ order.id }}</div>
+                    <div class="order-date">{{ order.created_at }}</div>
+
+                    <!-- STATUS CONDITIONALS -->
+                    {% if order.status == "Placed" %}
+                        <div class="status placed">Sequence_Placed</div>
+                    {% elif order.status == "Shipped" %}
+                        <div class="status shipped">Transit_HUB</div>
+                    {% elif order.status == "Delivered" %}
+                        <div class="status delivered">Sequence_Complete</div>
+                    {% elif order.status == "Cancelled" %}
+                        <div class="status cancelled">Terminated</div>
+                    {% endif %}
+
+                    <!-- ITEMS LOOP -->
+                    <div style="margin-top: 20px;">
+                        {% for item in order.items.all %}
+                            <div class="item">
+                                <span style="font-family: 'JetBrains Mono'; opacity: 0.5;">[ {{ item.quantity }}x ]</span> 
+                                {{ item.product.name }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="right">
+                    {% if order.discount_amount > 0 %}
+                        <div class="discount-info" style="text-decoration:line-through; opacity: 0.4;">
+                            ₹{{ order.total_amount|add:order.discount_amount }}
+                        </div>
+                        <div class="discount-info" style="color: var(--success);">
+                            -₹{{ order.discount_amount }} Benefit
+                        </div>
+                    {% endif %}
+
+                    <div class="price">₹{{ order.total_amount }}</div>
+
+                    <div class="btn-group">
+                        <a href="{% url 'return_request' order.id %}" class="btn btn-return">
+                            Return_Exchange
+                        </a>
+
+                        {% if order.status != "Delivered" and order.status != "Cancelled" %}
+                            <a href="{% url 'cancel_order' order.id %}" class="btn btn-cancel">
+                                Cancel_Order
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RETURN STATUS LOOP -->
+            {% for r in order.returns.all %}
+                <div class="return-box">
+                    >> REQUEST_TYPE: <b>{{ r.request_type }}</b><br>
+                    >> STATUS: <b>{{ r.status }}</b><br>
+                    >> REFUND_LOG: <b>{{ r.refund_status }}</b>
+                </div>
+            {% endfor %}
+        </div>
+    {% empty %}
+        <div class="empty">
+            <h3>// No sequence logs found.</h3>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- AUTO REFRESH SCRIPT (PRESERVED) -->
+<script>
+    setInterval(function(){
+        fetch(window.location.href)
+        .then(res => res.text())
+        .then(html => {
+            let doc = new DOMParser().parseFromString(html,"text/html");
+            let newContainer = doc.querySelector(".container").innerHTML;
+            if(document.querySelector(".container").innerHTML !== newContainer) {
+                document.querySelector(".container").innerHTML = newContainer;
+            }
+        });
+    }, 10000);
+
+    // PREMIUM CURSOR LOGIC
+    const cursorFollower = document.getElementById('cursor-follower');
+    const cursorMain = document.getElementById('cursor-main');
+    let mouseX = -100, mouseY = -100, followerX = -100, followerY = -100, firstMove = false;
+
+    window.addEventListener('mousemove', (e) => {
+        if (!firstMove) { 
+            firstMove = true; 
+            cursorFollower.style.opacity = "1"; 
+            cursorMain.style.opacity = "1"; 
+        }
+        mouseX = e.clientX; 
+        mouseY = e.clientY;
+        cursorMain.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+    });
+
+    function animateCursor() {
+        if (firstMove) {
+            followerX += (mouseX - followerX) * 0.15;
+            followerY += (mouseY - followerY) * 0.15;
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px)`;
+        }
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // INTERACTION FEEDBACK
+    document.addEventListener('mouseover', (e) => {
+        if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.order-card')) {
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px) scale(1.4)`;
+            cursorFollower.style.borderColor = "#fff";
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.order-card')) {
+            cursorFollower.style.transform = `translate(${followerX - 22}px, ${followerY - 22}px) scale(1)`;
+            cursorFollower.style.borderColor = "var(--accent)";
+        }
+    });
+</script>
+
+</body>
+</html> {% endcomment %}
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:"Segoe UI", Arial;
+}
+
+body{
+background:#f1f3f6;
+}
+
+/* HEADER */
+
+.header{
+background:linear-gradient(to right,#2874f0,#3f8cff);
+color:white;
+padding:16px 30px;
+font-size:20px;
+font-weight:600;
+box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* CONTAINER */
+
+.container{
+max-width:1000px;
+margin:30px auto;
+padding:10px;
+}
+
+/* CARD */
+
+.order-card{
+background:white;
+border-radius:12px;
+margin-bottom:18px;
+padding:18px;
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
+transition:0.25s;
+border-left:6px solid #2874f0;
+}
+
+.order-card:hover{
+transform:translateY(-4px);
+box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* FLEX */
+
+.order-content{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+/* LEFT */
+
+.order-id{
+font-size:18px;
+font-weight:600;
+margin-bottom:4px;
+}
+
+.order-date{
+font-size:13px;
+color:#777;
+margin-bottom:8px;
+}
+
+.item{
+font-size:14px;
+color:#333;
+margin-top:3px;
+}
+
+/* STATUS BADGE */
+
+.status{
+display:inline-block;
+padding:4px 10px;
+border-radius:20px;
+font-size:13px;
+font-weight:500;
+margin-top:5px;
+}
+
+.placed{
+background:#fff3cd;
+color:#856404;
+}
+
+.shipped{
+background:#d1ecf1;
+color:#0c5460;
+}
+
+.delivered{
+background:#d4edda;
+color:#155724;
+}
+
+.cancelled{
+background:#f8d7da;
+color:#721c24;
+}
+
+/* RIGHT */
+
+.right{
+text-align:right;
+}
+
+.price{
+font-size:20px;
+font-weight:600;
+margin-bottom:10px;
+}
+
+/* BUTTONS */
+
+.btn{
+display:inline-block;
+padding:8px 16px;
+border-radius:6px;
+text-decoration:none;
+font-size:14px;
+margin-top:5px;
+transition:0.2s;
+}
+
+.btn-return{
+background:#28a745;
+color:white;
+}
+
+.btn-return:hover{
+background:#218838;
+}
+
+.btn-cancel{
+background:#dc3545;
+color:white;
+}
+
+.btn-cancel:hover{
+background:#c82333;
+}
+
+/* RETURN BOX */
+
+.return-box{
+margin-top:10px;
+background:#f8f9fa;
+padding:10px;
+border-radius:8px;
+font-size:13px;
+}
+
+/* BACK BUTTON */
+
+.back{
+display:inline-block;
+margin-top:20px;
+background:#2874f0;
+color:white;
+padding:10px 18px;
+border-radius:6px;
+text-decoration:none;
+}
+
+.back:hover{
+background:#1d5ed8;
+}
+
+/* EMPTY */
+
+.empty{
+text-align:center;
+padding:40px;
+background:white;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+My Orders
+</div>
+
+<div class="container">
+
+{% for order in orders %}
+
+<div class="order-card">
+
+<div class="order-content">
+
+<div>
+
+<div class="order-id">
+Order #{{ order.id }}
+</div>
+
+<div class="order-date">
+{{ order.created_at }}
+</div>
+
+<!-- STATUS -->
+
+{% if order.status == "Placed" %}
+<div class="status placed">Order Placed</div>
+
+{% elif order.status == "Shipped" %}
+<div class="status shipped">🚚 Shipped</div>
+
+{% elif order.status == "Delivered" %}
+<div class="status delivered">Delivered</div>
+
+{% elif order.status == "Cancelled" %}
+<div class="status cancelled">❌ Cancelled</div>
+
+{% endif %}
+
+<!-- ITEMS -->
+
+{% for item in order.items.all %}
+<div class="item">
+{{ item.product.name }} × {{ item.quantity }}
+</div>
+{% endfor %}
+
+</div>
+
+<div class="right">
+
+{% if order.discount_amount > 0 %}
+
+<div style="text-decoration:line-through;color:#777;">
+₹{{ order.total_amount|add:order.discount_amount }}
+</div>
+
+<div style="color:green;font-size:13px;">
+-₹{{ order.discount_amount }} discount
+</div>
+
+{% endif %}
+
+<div class="price">
+₹{{ order.total_amount }}
+</div>
+
+<!-- RETURN BUTTON ONLY AFTER DELIVERY -->
+
+{% if order.status == "Delivered" %}
+<a href="{% url 'return_request' order.id %}" class="btn btn-return">
+Return / Exchange
+</a>
+{% endif %}
+
+<!-- CANCEL BUTTON -->
+
+{% if order.status != "Delivered" and order.status != "Cancelled" %}
+
+<br>
+
+<a href="{% url 'cancel_order' order.id %}" class="btn btn-cancel">
+Cancel Order
+</a>
+
+{% endif %}
+
+</div>
+
+</div>
+
+<!-- RETURN STATUS -->
+
+{% for r in order.returns.all %}
+<div class="return-box">
+
+Request: <b>{{ r.request_type }}</b><br>
+Status: {{ r.status }}<br>
+Refund: {{ r.refund_status }}
+
+</div>
+{% endfor %}
+
+</div>
+
+{% empty %}
+
+<div class="empty">
+<h3>No Orders Yet</h3>
 </div>
 
 {% endfor %}
