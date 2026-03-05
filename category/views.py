@@ -320,8 +320,6 @@ def place_order(request):
     cart.items.all().delete()
     return redirect('my_orders')
 
-
-
 @login_required
 def my_orders(request):
 
@@ -337,10 +335,15 @@ def my_orders(request):
         diff = now - order.created_at
 
         if diff >= timedelta(minutes=2):
-            order.status = "Delivered"
+
+            if order.status != "Delivered":
+                order.status = "Delivered"
+                order.delivered_at = timezone.now()
 
         elif diff >= timedelta(minutes=1):
-            order.status = "Shipped"
+
+            if order.status != "Shipped":
+                order.status = "Shipped"
 
         else:
             order.status = "Placed"
@@ -348,6 +351,33 @@ def my_orders(request):
         order.save()
 
     return render(request, "my_orders.html", {"orders": orders})
+
+# @login_required
+# def my_orders(request):
+
+#     orders = Order.objects.filter(user=request.user).order_by('-created_at')
+
+#     now = timezone.now()
+
+#     for order in orders:
+
+#         if order.status == "Cancelled":
+#             continue
+
+#         diff = now - order.created_at
+
+#         if diff >= timedelta(minutes=2):
+#             order.status = "Delivered"
+
+#         elif diff >= timedelta(minutes=1):
+#             order.status = "Shipped"
+
+#         else:
+#             order.status = "Placed"
+
+#         order.save()
+
+#     return render(request, "my_orders.html", {"orders": orders})
 @login_required
 def cancel_order(request, order_id):
 
